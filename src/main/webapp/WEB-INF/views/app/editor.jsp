@@ -77,6 +77,20 @@
             <a id="delete-ws" data-toggle="tooltip" data-placement="bottom" title="<spring:message code="editor.actions.delete_workspace" />">
                 <i class="material-icons">delete</i>
             </a>
+            <c:choose>
+            <c:when test="${!isgdriveconnected}">
+             <a id="gdrive-ws" href="gdrive/connect" data-placement="bottom" title="<spring:message code="editor.actions.gdrive.connect"/>">
+            Google Drive
+            </a>
+            </c:when>
+            <c:otherwise>
+            <a id="gdrive-ws" href="gdrive/disconnect" data-placement="bottom" title="<spring:message code="editor.actions.gdrive.disconnect"/>">
+            Google Drive
+            </a>
+            </c:otherwise>
+            </c:choose>
+         
+            
             <label class="switch">
                 <input onchange="toggleAdvancedMode()" type="checkbox">
                 <div class="slider round"></div>
@@ -90,6 +104,7 @@
                       color: #777;
                       ">Advanced</span>
             </label>
+            
         </div>
     </div>
 

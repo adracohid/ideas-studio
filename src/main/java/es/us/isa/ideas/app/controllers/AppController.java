@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import es.us.isa.ideas.app.mail.CustomMailer;
+import es.us.isa.ideas.app.security.LoginService;
+import es.us.isa.ideas.app.util.GDrive;
 
 @Controller
 @RequestMapping("/app")
@@ -26,6 +28,7 @@ public class AppController extends AbstractController {
 	public ModelAndView editor() {
 		ModelAndView result;
 		result = new ModelAndView("app/editor");
+		result.addObject("isgdriveconnected",GDrive.isConnected(LoginService.getPrincipal().getUsername()));
 		return result;
 	}
 

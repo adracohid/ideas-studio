@@ -231,7 +231,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                            // Error pages and other resources:
                            "/resources/**","/errorpages/**",
                            // Soma additiona domain-specific public pages:
-                           "/researcher/create","/app/wsm")
+                           "/researcher/create","/app/wsm",
+                           //google drive
+                           "/gdrive/**")
                             .permitAll()                                
                 .anyRequest().authenticated()
             .and()
