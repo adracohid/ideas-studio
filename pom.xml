@@ -227,6 +227,24 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
         </dependency>
+        <!-- API Google Drive -->
+        		<dependency>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client</artifactId>
+			<version>1.23.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.oauth-client </groupId>
+			<artifactId>google-oauth-client-jetty </artifactId>
+			<version> 1.23.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.apis </groupId>
+			<artifactId>google-api-services-drive </artifactId>
+			<version>v3-rev110-1.23.0 </version>
+		</dependency>
     </dependencies>
     <build>
         <plugins>

@@ -8,7 +8,7 @@
  * 
  */
 
-package es.us.isa.ideas.utilities;
+package es.us.isa.ideas.app.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;

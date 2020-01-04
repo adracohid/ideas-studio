@@ -55,9 +55,15 @@ public class FileController extends AbstractController {
     private static final String FILE_TYPE_WS="ws";
 
     private static IdeasRepo repoLab = null;
+    //Hace falta crear un repositorio para google drive
     
     private static final Logger logger = Logger.getLogger(FileController.class.getName());
 
+    public static IdeasRepo initRepoLab(String url) {
+    	//La url es relativa
+    	if(url==null)
+    }
+    //En vez de devolver un void deberia devolver un Ideas repo que sera de ficheros o de google drive
     public static void initRepoLab() {
         if (FileController.repoLab == null) {
             IdeasRepo.init(new AuthenticationManagerDelegate() {
@@ -89,7 +95,7 @@ public class FileController extends AbstractController {
     public boolean createFile(@RequestParam("fileUri") String fileUri,
                               @RequestParam("fileType") String fileType) {
         initRepoLab();
-        
+        IdeasRepo repo=initRepoLab(fileUri);
         boolean res = Boolean.FALSE;
         boolean success = Boolean.TRUE;
         

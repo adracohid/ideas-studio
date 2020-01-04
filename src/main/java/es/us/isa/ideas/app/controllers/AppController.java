@@ -1,5 +1,6 @@
 package es.us.isa.ideas.app.controllers;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import es.us.isa.ideas.app.mail.CustomMailer;
+import es.us.isa.ideas.app.security.GoogleAuthorizationService;
 import es.us.isa.ideas.app.security.LoginService;
-import es.us.isa.ideas.app.util.GDrive;
 
 @Controller
 @RequestMapping("/app")
@@ -19,6 +20,9 @@ public class AppController extends AbstractController {
 
 	@Autowired
 	CustomMailer mailer;
+	
+	@Autowired
+	GoogleAuthorizationService googleAuthorizationService;
 
 	public AppController() {
 		super();
@@ -28,8 +32,15 @@ public class AppController extends AbstractController {
 	public ModelAndView editor() {
 		ModelAndView result;
 		result = new ModelAndView("app/editor");
-		result.addObject("isgdriveconnected",GDrive.isConnected(LoginService.getPrincipal().getUsername()));
-		return result;
+		try {
+			Boolean isAuth=googleAuthorizationService.isUserAuthenticated(LoginService.getPrincipal().getUsername());
+			result.addObject("isgdriveconnected",isAuth);
+		} catch (IOException e) {
+			result.addObject("error","¡Ha ocurrido un error!");
+			e.printStackTrace();
+		}
+		
+				return result;
 	}
 
 	@RequestMapping("/social")
