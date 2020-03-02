@@ -146,9 +146,9 @@ var FileApi = {
 		});
 	},
 
-	createWorkspace : function(workspaceName, description, tags, callback) {
+	createWorkspace : function(workspaceName, description, tags, callback,type) {
             
-		$.ajax("files/workspaces?workspaceName=" + workspaceName +"&description="+description+"&tags="+tags, {
+		$.ajax("files/workspaces?workspaceName=" + workspaceName +"&description="+description+"&tags="+tags+"&type="+type, {
 			"type" : "POST",
 			"success" : function(result) {
 				callback(result);

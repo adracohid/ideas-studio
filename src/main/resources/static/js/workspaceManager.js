@@ -197,7 +197,7 @@ var WorkspaceManager = {
             if (callback) callback();
         });
     },
-    createWorkspace: function (workspaceName, description, tags, callback) {
+    createWorkspace: function (workspaceName, description, tags, callback,type) {
         FileApi.createWorkspace(workspaceName, description, tags, function (ts) {
             if (ts) {
                 createWSLine(workspaceName, function () {
@@ -219,7 +219,7 @@ var WorkspaceManager = {
             }
             hideModal();
 
-        });
+        },type);
     },
     deleteWorkspace: function (workspaceName, callback) {
         var continueHandler = function () {

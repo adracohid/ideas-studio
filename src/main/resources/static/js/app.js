@@ -166,12 +166,13 @@ jQuery(function () {
             var workspaceName = normalizeWSName($("#modalCreationField input").val());
             var description = $("#descriptionInput textarea").val();
             var tags = $("#tagsInput textarea").val();
-
+            //var type = $("#typeInput input").val();
+            var type= $("input[name=storage]:checked").val();
             if (workspaceName !== "") {
                 $("#workspacesNavContainer li").removeClass("active");
                 WorkspaceManager.createWorkspace(workspaceName, description, tags, function () {
                     AppPresenter.loadSection("editor", workspaceName);
-                });
+                },type);
             } else {
                 alert("Unable to create workspace");
             }

@@ -39,6 +39,10 @@ public void init() throws Exception{
 	driveService=new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME).build();
 }
 */
+public Drive getCredentials(String username) throws IOException {
+	Credential credential=googleAuthorizationService.getCredentials(username);
+	return new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME).build();	
+}
 public void uploadFile(String name,String username) throws IOException, GeneralSecurityException {
 	File fileMetadata = new File();
 	String type = null;

@@ -18,9 +18,9 @@ import es.us.isa.ideas.app.security.UserAccount;
 import es.us.isa.ideas.app.security.UserAccountService;
 import es.us.isa.ideas.app.services.ResearcherService;
 import es.us.isa.ideas.app.services.WorkspaceService;
+import es.us.isa.ideas.repo.Facade;
 import es.us.isa.ideas.repo.IdeasRepo;
 import es.us.isa.ideas.repo.exception.AuthenticationException;
-import es.us.isa.ideas.repo.impl.fs.FSFacade;
 import es.us.isa.ideas.repo.impl.fs.FSWorkspace;
 import es.us.isa.ideas.app.util.AppResponse;
 
@@ -159,7 +159,7 @@ public class DemoController extends AbstractController {
 
         if (demoWorkspaceName == null) {
             try {
-                demoWorkspaceName = FSFacade.getSelectedWorkspace(username);
+                demoWorkspaceName = Facade.getSelectedWorkspace(username);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, null, ex);
             }
@@ -179,7 +179,7 @@ public class DemoController extends AbstractController {
 
         // TODO: Cambiar comprobacion una vez este refactorizado. No se deberia trabajar a nivel de cadenas, sino de objetos serializables (para devolver JSON)	
         try {
-            demoExists = FSFacade.getWorkspaces(DEMO_MASTER).contains("\"" + demoWorkspaceName + "\"");
+            demoExists = Facade.getWorkspaces(DEMO_MASTER).contains("\"" + demoWorkspaceName + "\"");
         } catch (Exception e) {
            logger.log(Level.SEVERE, null, e);
             demoExists = Boolean.FALSE;;
@@ -236,7 +236,7 @@ public class DemoController extends AbstractController {
 
         boolean demoExists = Boolean.TRUE;
         try {
-            demoExists = FSFacade.getWorkspaces(DEMO_MASTER).contains("\"" + demoWorkspaceName + "\"");
+            demoExists = Facade.getWorkspaces(DEMO_MASTER).contains("\"" + demoWorkspaceName + "\"");
         } catch (Exception e) {
             logger.log(Level.SEVERE, null, e);
             demoExists = Boolean.FALSE;
@@ -287,7 +287,7 @@ public class DemoController extends AbstractController {
         if (isCurrentUserCreator){
             
             try {
-                FSFacade.deleteWorkspace(demoWorkspaceName, DEMO_MASTER);
+                Facade.deleteWorkspace(demoWorkspaceName, DEMO_MASTER);
             } 
             catch (Exception e) {
                 success = false;

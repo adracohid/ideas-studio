@@ -77,20 +77,8 @@
             <a id="delete-ws" data-toggle="tooltip" data-placement="bottom" title="<spring:message code="editor.actions.delete_workspace" />">
                 <i class="material-icons">delete</i>
             </a>
-            <c:choose>
-            <c:when test="${!isgdriveconnected}">
-             <a id="gdrive-ws" href="gdrive/googlesignin" data-placement="bottom" title="<spring:message code="editor.actions.gdrive.connect"/>">
-            Estas desconectado de Google Drive
-            </a>
+             
            
-            </c:when>
-            <c:otherwise>
-            <a id="gdrive-ws" href="gdrive/logout" data-placement="bottom" title="<spring:message code="editor.actions.gdrive.disconnect"/>">
-            Estas conectado a Google Drive
-            </a>
-            </c:otherwise>
-            </c:choose>
-         	 <p>${error} </p>
             
             <label class="switch">
                 <input onchange="toggleAdvancedMode()" type="checkbox">

@@ -26,7 +26,15 @@
             <span class="input-group-addon"><spring:message code="editor.actions.modal.create_workspace.tags" /></span>
             <textarea type="text" class="form-control"></textarea>
         </div>
-
+		<div class="input-group" id="typeInput" >
+            <span class="input-group-addon"><spring:message code="editor.actions.modal.create_workspace.type" /></span>
+            
+            <input type="radio" class="form-control" id="Google_Drive" name="storage" value="Google_Drive">
+            <label for="Google_Drive">Google Drive</label><br>
+            <input type="radio" class="form-control" name="storage" id="local" name="storage" value="local">
+            <label for="local">Local</label>
+            <!-- TODO ADD TYPE OF WORKSPACE HERE! -->
+        </div>
         <div class="input-group">     
             <div class="checkbox">
                 <label>

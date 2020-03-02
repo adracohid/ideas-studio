@@ -23,18 +23,49 @@
             </script>
 	<div id="userTab" class="dropdown-toggle" data-toggle="dropdown">
 		<div id="principalUserInfo">
-			<span></span> <BR />
+			<span></span> </br>
+			
 			<security:authentication property="principal.authorities" var="auths"/>
 			<span id="principalUserAuths"></span>
+			             
+            <c:choose>
+            <c:when test="${!isgdriveconnected}">
+            <img src="../../img/logo-gdrive.png" width="30" style="float:left; bottom:5px; left:15px;  position:relative;">
+            
+            </a>
+           
+            </c:when>
+            <c:otherwise>
+			<img src="../../img/Google_Drive_logo_color.png" width="30" style="float:left; bottom:5px; left:15px; position:relative;">
+
+            </a>
+            </c:otherwise>
+            </c:choose>
 		</div>
+		
 		<div id="principalUserAvatar"></div>
 		<span id="userCornerMenu" class="glyphicon glyphicon-chevron-down"></span>
 		<span id="userTabHandler"></span>
 	</div>
 	<ul class="dropdown-menu" role="menu">
 		<li><a href="settings/user#profile" target="_self" title=""><spring:message code="master.page.account" /></a></li>
-<!--		<li><a href="settings/user" target="_self"><spring:message code="master.page.settings" /></a></li>-->
-		<security:authorize access="hasAnyRole('ADMIN')">
+		 <c:choose>
+            <c:when test="${!isgdriveconnected}">
+            <li> <a id="gdrive-ws" href="gdrive/googlesignin" data-placement="bottom" title="">
+      		<spring:message code="master.page.account.googledrive.connect"/>
+            </a>
+           </li>
+            </c:when>
+            <c:otherwise>
+           <li> <a id="gdrive-ws" href="gdrive/logout" data-placement="bottom" title="">
+           <spring:message code="master.page.account.googledrive.disconnect"/>
+            </a>
+            </li>
+            </c:otherwise>
+            </c:choose>
+		
+<!--		<li><a href="settings/user" target="_self"><spring:message code="master.page.settings" /></a></li>-->		<security:authorize access="hasAnyRole('ADMIN')">
+		
 			<li><a href="settings/admin" target="_self"><spring:message code="master.page.admin" /></a></li>
 		</security:authorize>
 		<li class="divider"></li>

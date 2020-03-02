@@ -8,22 +8,28 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import es.us.isa.ideas.repo.AuthenticationManagerDelegate;
+import es.us.isa.ideas.repo.Facade;
 import es.us.isa.ideas.repo.IdeasRepo;
 import es.us.isa.ideas.app.security.LoginService;
 import es.us.isa.ideas.app.security.UserAccount;
+import es.us.isa.ideas.app.services.GDriveService;
 import es.us.isa.ideas.app.services.WorkspaceService;
 import es.us.isa.ideas.app.util.FileMetadata;
 import es.us.isa.ideas.repo.exception.AuthenticationException;
 import es.us.isa.ideas.repo.exception.BadUriException;
-import es.us.isa.ideas.repo.impl.fs.FSFacade;
+import es.us.isa.ideas.repo.exception.ObjectClassNotValidException;
+import es.us.isa.ideas.repo.gdrive.DriveQuickstart;
+import es.us.isa.ideas.repo.gdrive.GDriveWorkspace;
 import es.us.isa.ideas.repo.impl.fs.FSWorkspace;
 import es.us.isa.ideas.app.util.AppResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLConnection;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -39,12 +45,17 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.google.api.services.drive.Drive;
+
 @Controller
 @RequestMapping("/files")
 public class FileController extends AbstractController {
 
     @Autowired
     WorkspaceService workspaceService;
+    
+    @Autowired
+    GDriveService gdriveService;
     
     private static final String DEMO_MASTER="DemoMaster";
     private static final String SAMPLE_WORKSPACE="SampleWorkspace";
@@ -58,13 +69,45 @@ public class FileController extends AbstractController {
     //Hace falta crear un repositorio para google drive
     
     private static final Logger logger = Logger.getLogger(FileController.class.getName());
-
-    public static IdeasRepo initRepoLab(String url) {
+    /*
+    //Esta funcion devuelve una instancia de un IdeasRepo o Drive
+    public static Object initRepoLab(String url) {
     	//La url es relativa
-    	if(url==null)
+    	
+    	if(url==null || "".equals(url) || existeWorkspaceLocal(url))
+    		return initRepoLab();
+		else
+			try {
+				return DriveQuickstart.driveService();
+			} catch (GeneralSecurityException | IOException e) {
+				// TODO Auto-generated catch block
+				
+				e.printStackTrace();
+				return null;
+			}
     }
-    //En vez de devolver un void deberia devolver un Ideas repo que sera de ficheros o de google drive
-    public static void initRepoLab() {
+   
+    */
+    private static boolean existeWorkspaceLocal(String url) {
+		boolean res=false;
+    	String[] s=url.split("/");
+		FSWorkspace w=new FSWorkspace(s[0], LoginService.getPrincipal().getUsername());
+		File wfile;
+		try {
+			wfile = new File(IdeasRepo.get().getObjectFullUri(w));
+			res=wfile.exists();
+		} catch (ObjectClassNotValidException e) {
+			
+			e.printStackTrace();
+		}
+		
+		
+		return res;
+	}
+
+
+	//En vez de devolver un void deberia devolver un Ideas repo
+    public static IdeasRepo initRepoLab() {
         if (FileController.repoLab == null) {
             IdeasRepo.init(new AuthenticationManagerDelegate() {
 
@@ -86,7 +129,33 @@ public class FileController extends AbstractController {
             });
 
             repoLab = IdeasRepo.get();
+            return repoLab;
+        }else {
+        	return FileController.repoLab;
         }
+    }
+    private void initRepo(String type) {
+    	 if(type.equals("local")) {
+         	initRepoLab();
+         }
+         if(type.equals("Google_Drive")) {
+         	try {
+         		gdriveService.getCredentials(LoginService.getPrincipal().getUsername());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+         }
+    }
+    
+    public static Drive initRepoDrive() {
+    	try {
+			return DriveQuickstart.driveService();
+		} catch (GeneralSecurityException | IOException e) {
+			
+			e.printStackTrace();
+			return null;
+		}
     }
 
     /* Files C-UD */
@@ -94,8 +163,11 @@ public class FileController extends AbstractController {
     @ResponseBody
     public boolean createFile(@RequestParam("fileUri") String fileUri,
                               @RequestParam("fileType") String fileType) {
-        initRepoLab();
-        IdeasRepo repo=initRepoLab(fileUri);
+		
+		System.out.println(existeWorkspaceLocal(fileUri));
+		initRepoLab();
+       // Object o=initRepoLab(fileUri);
+        //IdeasRepo repo=initRepoLab(fileUri);
         boolean res = Boolean.FALSE;
         boolean success = Boolean.TRUE;
         
@@ -109,13 +181,28 @@ public class FileController extends AbstractController {
         
         try {
             if (fileType.equalsIgnoreCase(FILE_TYPE_PROJECT)) { //Project
-                res = FSFacade.createProject(fileUri, username);
+            	if(o instanceof IdeasRepo) {
+                res = Facade.createProject(fileUri, username);
+            	}
+            	if (o instanceof Drive) {
+            	res=Facade.createGDriveProject(fileUri, username);
+            	}
             } 
             else if (fileType.equalsIgnoreCase(FILE_TYPE_DIR)) { //Directory
-                res = FSFacade.createDirectory(fileUri, username);
+                if(o instanceof IdeasRepo) {
+            	res = Facade.createDirectory(fileUri, username);
+                }
+                if(o instanceof Drive) {
+                res=Facade.createGDriveDirectory(fileUri, username);
+                }
             } 
             else { //FILE
-                res = FSFacade.createFile(fileUri, username);
+            	if(o instanceof IdeasRepo) {
+                res = Facade.createFile(fileUri, username);
+            	}
+            	if(o instanceof Drive) {
+            	res= Facade.createGDriveFile(fileUri, username);
+            	}
             }
         } 
         catch (BadUriException | AuthenticationException e) {
@@ -153,10 +240,20 @@ public class FileController extends AbstractController {
         
         try {
             if (fileType.equalsIgnoreCase(FILE_TYPE_DIR)) { //Directory
-                res = FSFacade.renameDirectory(fileUri, username, newName);
+                if(o instanceof IdeasRepo) {
+            	res = Facade.renameDirectory(fileUri, username, newName);
+                }
+                if(o instanceof Drive) {
+                res= Facade.renameGDriveDirectory(fileUri, username, newName);
+                }
             } 
             else { //FILE
-                res = FSFacade.renameFile(fileUri, username, newName);
+            	if(o instanceof IdeasRepo) {
+                res = Facade.renameFile(fileUri, username, newName);
+            	}
+            	if(o instanceof Drive) {
+            	res= Facade.renameGDriveFile(fileUri, username, newName);
+            	}
             }
         } 
         catch (Exception e) {
@@ -191,10 +288,20 @@ public class FileController extends AbstractController {
         
         try {
             if (fileType.equalsIgnoreCase(FILE_TYPE_DIR)) { //Directory
-                res = FSFacade.moveDirectory(fileUri, username, destUri, copy);
+            	if(o instanceof IdeasRepo) {
+                res = Facade.moveDirectory(fileUri, username, destUri, copy);
+            	}
+            	if(o instanceof Drive) {
+            	res= Facade.moveGDriveDirectory(fileUri, username, destUri, copy);
+            	}
             } 
             else { //FILE
-                res = FSFacade.moveFile(fileUri, username, destUri, copy);
+            	if(o instanceof IdeasRepo) {
+                res = Facade.moveFile(fileUri, username, destUri, copy);
+            	}
+            	if(o instanceof Drive) {
+            	res= Facade.moveGDriveFile(fileUri, username, destUri, copy);
+            	}
             }
         } 
         catch (Exception e) {
@@ -226,13 +333,28 @@ public class FileController extends AbstractController {
         
         try {
             if (fileType.equalsIgnoreCase(FILE_TYPE_PROJECT)) { //Project
-                res = FSFacade.deleteProject(fileUri, username);
+               if(o instanceof IdeasRepo) {
+            	res = Facade.deleteProject(fileUri, username);
+               }
+               if(o instanceof Drive) {
+            	 res= Facade.deleteGDriveProject(fileUri, username);
+               }
             } 
             else if (fileType.equalsIgnoreCase(FILE_TYPE_DIR)) { //Directory
-                res = FSFacade.deleteDirectory(fileUri, username);
+                if(o instanceof IdeasRepo) {
+            	res = Facade.deleteDirectory(fileUri, username);
+                }
+                if(o instanceof Drive) {
+                res=Facade.deleteGDriveDirectory(fileUri, username);
+                }
             } 
             else { //FILE
-                res = FSFacade.deleteFile(fileUri, username);
+            	if(o instanceof IdeasRepo) {
+                res = Facade.deleteFile(fileUri, username);
+            	}
+            	if(o instanceof Drive) {
+            	res= Facade.deleteGDriveFile(fileUri, username);
+            	}
             }
         } 
         catch (Exception e) {
@@ -250,7 +372,7 @@ public class FileController extends AbstractController {
     @ResponseBody
     public String getFileContent(@RequestParam("fileUri") String fileUri) {
         
-        initRepoLab();
+        Object o=initRepoLab(fileUri);
         
         String fileContent = "";
         
@@ -261,7 +383,12 @@ public class FileController extends AbstractController {
         }
             
         try {
-            fileContent = FSFacade.getFileContent(fileUri, LoginService.getPrincipal().getUsername());
+        	if(o instanceof IdeasRepo) {
+            fileContent = Facade.getFileContent(fileUri, LoginService.getPrincipal().getUsername());
+        	}
+        	if(o instanceof Drive) {
+        	fileContent = Facade.getGDriveFileContent(fileUri, LoginService.getPrincipal().getUsername());
+        	}
         } 
         catch (AuthenticationException ex){
             logger.log(Level.SEVERE, null , ex);
@@ -275,7 +402,7 @@ public class FileController extends AbstractController {
     @ResponseBody
     public boolean setFileContent(@RequestParam("fileUri") String fileUri,
                                   @RequestParam("fileContent") String fileContent) {
-        initRepoLab();
+        Object o=initRepoLab(fileUri);
         
         boolean res = Boolean.FALSE;
         boolean success = Boolean.TRUE;
@@ -289,7 +416,12 @@ public class FileController extends AbstractController {
         String username = LoginService.getPrincipal().getUsername();
         
         try {
-            res = FSFacade.setFileContent(fileUri, username, fileContent);
+        	if(o instanceof IdeasRepo) {
+            res = Facade.setFileContent(fileUri, username, fileContent);
+        	}
+        	if(o instanceof Drive) {
+        	res= Facade.setGDriveFileContent(fileUri, username, fileContent);
+        	}
         } 
         catch (Exception e) {
             success = Boolean.FALSE;
@@ -329,7 +461,7 @@ public class FileController extends AbstractController {
         // trabajar a nivel de cadenas, sino de objetos serializables (para
         // devolver JSON)
         try {
-            demoExists = FSFacade.getWorkspaces("DemoMaster").contains("\"" + demoWorkspaceName + "\"");
+            demoExists = Facade.getWorkspaces("DemoMaster").contains("\"" + demoWorkspaceName + "\"");
         } catch (Exception e) {
             logger.log(Level.SEVERE, e.getMessage());
             demoExists = false;
@@ -353,7 +485,7 @@ public class FileController extends AbstractController {
 
         } else if (SAMPLE_WORKSPACE.equalsIgnoreCase(demoWorkspaceName)) {
             try {
-                FSFacade.createWorkspace(demoWorkspaceName, username);
+                Facade.createWorkspace(demoWorkspaceName, username);
                 response.setMessage("Empty SampleWorkspace has been created");
                 response.setStatus(AppResponse.Status.OK);
             } catch (AuthenticationException ex) {
@@ -375,19 +507,59 @@ public class FileController extends AbstractController {
         initRepoLab();
         String ws = "";
         try {
-            ws = FSFacade.getWorkspaces(LoginService.getPrincipal().getUsername());
+            ws = Facade.getWorkspaces(LoginService.getPrincipal().getUsername());
         } catch (AuthenticationException e) {
            logger.log(Level.SEVERE, null, e);
         }
         return ws;
     }
+    private boolean persistWorkspace(String name,String username) {
+    boolean res=false;
+	//Primero revisa si esta la carpeta del repositorio
+	try {
+	//checkOwnerFolder();
+	com.google.api.services.drive.model.File fileMetadata = new com.google.api.services.drive.model.File();
+	fileMetadata.setName(name);
+	fileMetadata.setMimeType("application/vnd.google-apps.folder");
+	//Cada workspace se guarda dentro de la carpeta repositorio
+	//fileMetadata.setParents(Collections.singletonList(DriveQuickstart.getRepoFolder(this.getOwner()).getId()));
+	//Antes de guardar el workspace comprobamos que no existe otro con el mismop nombre
+	//if(DriveQuickstart.getFilesByFolderId(DriveQuickstart.getRepoFolder(this.getOwner()).getId()).contains(fileMetadata.getName())) {
+	//	LOGGER.log(Level.INFO,"Workspace already exist");
+	//}else {
+	//DriveQuickstart.driveService().files().create(fileMetadata)
+    gdriveService.getCredentials(username).files().create(fileMetadata)
+	.setFields("id")
+    .execute();
+	res=true;
+	//}
+	}catch(IOException e) {
+		e.printStackTrace();
+	}
+	return res;
+}
 
+/*
+private void checkOwnerFolder() throws GeneralSecurityException, IOException {
+	// Si no hay ninguna carpeta crea la carpeta del repositorio
+	if (DriveQuickstart.getRepoFolder(this.getOwner())==null) {
+		File fileMetadata = new File();
+		fileMetadata.setName(this.getOwner());
+		fileMetadata.setMimeType("application/vnd.google-apps.folder");
+		DriveQuickstart.driveService().files().create(fileMetadata).setFields("id").execute();
+	}
+
+}
+*/
     @RequestMapping(value = "/workspaces", method = RequestMethod.POST)
     @ResponseBody
     public boolean createWorkspace(@RequestParam("workspaceName") String workspaceName,
                                    @RequestParam("description") String description,
-                                   @RequestParam("tags") String tags) {
-        initRepoLab();
+                                   @RequestParam("tags") String tags,
+                                   @RequestParam("type") String type) {
+
+    	initRepoLab();
+ 
         boolean res = false;
         boolean success = true;
         
@@ -402,7 +574,13 @@ public class FileController extends AbstractController {
          
         String username = LoginService.getPrincipal().getUsername();
         try {
-            res = FSFacade.createWorkspace(workspaceName, username);
+        	if(type.equals("local")) {
+            res = Facade.createWorkspace(workspaceName, username);
+        	}
+        	if(type.equals("Google_Drive")) {
+        	Drive credentials=gdriveService.getCredentials(username);
+        	res=Facade.createGDriveWorkspace(workspaceName, username, credentials);
+        	}
 
         } catch (Exception e) {
             success = false;
@@ -413,7 +591,7 @@ public class FileController extends AbstractController {
         }
         return res;
     }
-
+    //TODO
     @RequestMapping(value = "/workspaces", method = RequestMethod.PUT)
     @ResponseBody
     public boolean updateWorkspace( @RequestParam("workspaceName") String workspaceName,
@@ -441,7 +619,7 @@ public class FileController extends AbstractController {
         
         if(!(workspace.equals(newName))){
             try {
-                nameExists = FSFacade.getWorkspaces(username).contains("\"" + nameExists + "\"");
+                nameExists = Facade.getWorkspaces(username).contains("\"" + nameExists + "\"");
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null , e);
                 nameExists = false;
@@ -461,7 +639,7 @@ public class FileController extends AbstractController {
                     ws.setName(newName);    
                     workspaceService.save(ws);
                     try {
-                        FSFacade.saveSelectedWorkspace(newName, username);
+                        Facade.saveSelectedWorkspace(newName, username);
                     } catch (IOException ex) {
                         Logger.getLogger(FileController.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -492,7 +670,7 @@ public class FileController extends AbstractController {
         String username = LoginService.getPrincipal().getUsername();
         
         try {
-            FSFacade.deleteWorkspace(workspaceName, username);
+            Facade.deleteWorkspace(workspaceName, username);
         } 
         catch (Exception e) {
             success = false;
@@ -514,7 +692,7 @@ public class FileController extends AbstractController {
         String username = LoginService.getPrincipal().getUsername();
         
         try {
-            res = FSFacade.getSelectedWorkspace(username);
+            res = Facade.getSelectedWorkspace(username);
             }
         catch (Exception e) {
             logger.log(Level.WARNING, "There not exists a selected workspace for user {0}", username);
@@ -540,7 +718,7 @@ public class FileController extends AbstractController {
                         + LoginService.getPrincipal().getUsername());
         boolean res = true;
         try {
-            FSFacade.saveSelectedWorkspace(workspaceName, LoginService.getPrincipal().getUsername());
+            Facade.saveSelectedWorkspace(workspaceName, LoginService.getPrincipal().getUsername());
         } catch (Exception e) {
             res = false;
             logger.log(Level.SEVERE, e.getMessage());
@@ -583,8 +761,8 @@ public class FileController extends AbstractController {
             try {
                 fileMeta.setBytes(mpf.getBytes());
                 fileUri = getSelectedWorkspace() + "/" + pathUrl + "/" + fileMeta.getFileName();
-                FSFacade.createFile(fileUri, username);
-                FSFacade.setFileContent(fileUri, username, mpf.getBytes());
+                Facade.createFile(fileUri, username);
+                Facade.setFileContent(fileUri, username, mpf.getBytes());
                 files.add(fileMeta);
                 workspaceService.updateTime(getSelectedWorkspace(), username);
 
@@ -637,7 +815,7 @@ public class FileController extends AbstractController {
         try {
             File temp = File.createTempFile("uploadExtraction", "zipFiles");
             mpf.transferTo(temp);
-            FSFacade.extractIn(workspace, LoginService.getPrincipal().getUsername(), temp);
+            Facade.extractIn(workspace, LoginService.getPrincipal().getUsername(), temp);
             temp.delete();
             workspaceService.updateTime(workspace, username);
         } 
@@ -657,8 +835,8 @@ public class FileController extends AbstractController {
         
         fileUri += mpf.getOriginalFilename();
         try{
-            FSFacade.createFile(fileUri, username);
-            FSFacade.setFileContent(fileUri, username, mpf.getBytes());
+            Facade.createFile(fileUri, username);
+            Facade.setFileContent(fileUri, username, mpf.getBytes());
         }
         catch (Exception ex) {
             logger.log(Level.SEVERE, null, ex);
@@ -676,7 +854,7 @@ public class FileController extends AbstractController {
         
         try {
             String fileUri = java.net.URLDecoder.decode(pathUrl, "UTF-8");            
-            byte[] bytes=FSFacade.getFileContentAsBytes(fileUri, username);
+            byte[] bytes=Facade.getFileContentAsBytes(fileUri, username);
             response.addHeader("Content-Type", URLConnection.guessContentTypeFromName(pathUrl));
             FileCopyUtils.copy(bytes, response.getOutputStream());
             response.flushBuffer();
@@ -710,9 +888,9 @@ public class FileController extends AbstractController {
         try {
             response.addHeader("Content-Type", "application/zip");
             if (pathUrl.contains("/")) {
-                FSFacade.saveDirectoryContentAsZip(fileUri, username, response.getOutputStream());
+                Facade.saveDirectoryContentAsZip(fileUri, username, response.getOutputStream());
             } else {
-                FSFacade.saveWorkspaceContentAsZip(fileUri, username, response.getOutputStream());
+                Facade.saveWorkspaceContentAsZip(fileUri, username, response.getOutputStream());
                 success = Boolean.TRUE;
             }
             response.flushBuffer();
@@ -734,7 +912,7 @@ public class FileController extends AbstractController {
        String workspace= parts[0];
        String project= parts[1];
        String owner= LoginService.getPrincipal().getUsername();
-       FSFacade.copyProjectInto(workspace, project, owner, temDirectory);
+       Facade.copyProjectInto(workspace, project, owner, temDirectory);
      
     }
     @RequestMapping(value = "/copyTemptoProject", method = RequestMethod.GET)
@@ -748,7 +926,7 @@ public class FileController extends AbstractController {
        String project= parts[1];
        String owner= LoginService.getPrincipal().getUsername();
        
-       FSFacade.copytoProject(workspace, project, owner, temDirectory);
+       Facade.copytoProject(workspace, project, owner, temDirectory);
      
     }
     
@@ -766,7 +944,7 @@ public class FileController extends AbstractController {
         }
         try{
             String fileUri = java.net.URLDecoder.decode(pathUrl, "UTF-8")+separator+".description";        
-            byte[] bytes=FSFacade.getFileContentAsBytes(fileUri, username);
+            byte[] bytes=Facade.getFileContentAsBytes(fileUri, username);
             response.addHeader("Content-Type", URLConnection.guessContentTypeFromName(pathUrl));
             FileCopyUtils.copy(bytes, response.getOutputStream());
             response.flushBuffer();
@@ -794,8 +972,8 @@ public class FileController extends AbstractController {
                 content=request.getParameter("content");
             if(content==null)
                 content="";
-            FSFacade.createFile(fileUri,username);
-            FSFacade.setFileContent(fileUri, username, content.getBytes());                                        
+            Facade.createFile(fileUri,username);
+            Facade.setFileContent(fileUri, username, content.getBytes());                                        
         } catch (UnsupportedEncodingException exc) {
             logger.log(Level.SEVERE, null, exc);        
         }catch (Exception ex) {            

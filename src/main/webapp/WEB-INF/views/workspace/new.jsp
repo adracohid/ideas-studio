@@ -54,6 +54,7 @@
                     </span>
                 </div>
             </div>
+            
             <button type="button" id="saveWS" class="btn btn-primary">
                 <spring:message code="workspace.save" />
             </button>

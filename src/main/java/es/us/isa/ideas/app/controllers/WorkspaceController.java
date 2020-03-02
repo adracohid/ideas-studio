@@ -9,10 +9,10 @@ import es.us.isa.ideas.app.security.LoginService;
 import es.us.isa.ideas.app.services.ResearcherService;
 import es.us.isa.ideas.app.services.TagService;
 import es.us.isa.ideas.app.services.WorkspaceService;
+import es.us.isa.ideas.repo.Facade;
 import es.us.isa.ideas.repo.IdeasRepo;
 import es.us.isa.ideas.repo.exception.AuthenticationException;
 import es.us.isa.ideas.repo.exception.BadUriException;
-import es.us.isa.ideas.repo.impl.fs.FSFacade;
 import es.us.isa.ideas.repo.impl.fs.FSWorkspace;
 import java.util.Collection;
 import java.util.logging.Level;
@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+
+import com.google.api.services.drive.Drive;
 
 @Controller
 @RequestMapping("/workspaces")
@@ -105,7 +107,11 @@ public class WorkspaceController extends AbstractController {
         System.out.println("Persisting selected workspace:  " + workspaceName + ", username: " + username);
         boolean success = Boolean.TRUE;
         try {
-            FSFacade.saveSelectedWorkspace(workspaceName, username);
+        	
+            Facade.saveSelectedWorkspace(workspaceName, username);
+        	
+        	
+        	
         } catch (Exception e) {
             success = Boolean.FALSE;
         }
@@ -128,7 +134,7 @@ public class WorkspaceController extends AbstractController {
         boolean success = Boolean.TRUE;
 
         try {
-            FSFacade.saveSelectedWorkspace(workspaceName, LoginService.getPrincipal().getUsername());
+            Facade.saveSelectedWorkspace(workspaceName, LoginService.getPrincipal().getUsername());
         } catch (Exception e) {
             success = Boolean.FALSE;
         }
@@ -140,7 +146,7 @@ public class WorkspaceController extends AbstractController {
     @RequestMapping(value = "/{workspaceName}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteWorkspaceJSON(@PathVariable("workspaceName") String workspaceName) {
-        initRepoLab();
+        Object o=initRepoLab();
         try {
             workspaceName = new String(workspaceName.getBytes("iso-8859-15"),"UTF-8");
         } catch (Exception ex) {
@@ -150,7 +156,12 @@ public class WorkspaceController extends AbstractController {
         boolean success = Boolean.TRUE;
 
         try {
-            FSFacade.deleteWorkspace(workspaceName, username);
+        	if(o instanceof IdeasRepo) {
+            Facade.deleteWorkspace(workspaceName, username);
+        	}/*
+        	if(o instanceof Drive) {
+        	Facade.deleteGDriveWorkspace(workspaceName, username);
+        	}*/
         } catch (AuthenticationException | BadUriException e) {
             success = Boolean.FALSE;
         }
@@ -167,7 +178,8 @@ public class WorkspaceController extends AbstractController {
     @ResponseBody
     public String loadWorkspace(@PathVariable("workspaceName") String workspaceName) {
         logger.log(Level.INFO, "Reading workspace: {0}", workspaceName);
-        initRepoLab();
+        Object o=initRepoLab();
+        
         try {
             workspaceName = new String(workspaceName.getBytes("iso-8859-15"),"UTF-8");
         } catch (Exception ex) {
@@ -176,11 +188,25 @@ public class WorkspaceController extends AbstractController {
         String wsJson = "";
         try {
             String username = LoginService.getPrincipal().getUsername();
-            if (workspaceName.equalsIgnoreCase(SAMPLE_WORKSPACE) && !FSFacade.getWorkspaces(username).contains(workspaceName) || "[]".equals(FSFacade.getWorkspaces(username))) {
-                FSFacade.createWorkspace(SAMPLE_WORKSPACE, username);
-                FSFacade.saveSelectedWorkspace(SAMPLE_WORKSPACE, username);
+            if (workspaceName.equalsIgnoreCase(SAMPLE_WORKSPACE) && !Facade.getWorkspaces(username).contains(workspaceName) || "[]".equals(Facade.getWorkspaces(username))) {
+             
+            	if(o instanceof IdeasRepo) {
+            	Facade.createWorkspace(SAMPLE_WORKSPACE, username);
+            	}
+            	/*
+            	if(o instanceof Drive) {
+            	Facade.createGDriveWorkspace(SAMPLE_WORKSPACE, username);
+            	}*/
+                Facade.saveSelectedWorkspace(SAMPLE_WORKSPACE, username);
+            	
+            	/*
+            	if(o instanceof Drive) {
+            	Facade	
+            	}
+            	*/
+                //Si initRepoLab es una instancia de GDRIVE ejecuta estas funciones
             }
-            wsJson = FSFacade.getWorkspaceTree(workspaceName, LoginService.getPrincipal().getUsername());
+            wsJson = Facade.getWorkspaceTree(workspaceName, LoginService.getPrincipal().getUsername());
             if (LoginService.getPrincipal().getUsername().startsWith("demo")) {
                 workspaceService.updateLaunches(workspaceName, "DemoMaster");
             }
@@ -216,7 +242,7 @@ public class WorkspaceController extends AbstractController {
         boolean demoExists = Boolean.TRUE;
         
         try {
-            demoExists = FSFacade.getWorkspaces(DEMO_MASTER).contains("\"" + workspaceName + "\"");
+            demoExists = Facade.getWorkspaces(DEMO_MASTER).contains("\"" + workspaceName + "\"");
         } catch (Exception e) {
             logger.log(Level.SEVERE, null, e);
             demoExists = Boolean.FALSE;
@@ -267,7 +293,7 @@ public class WorkspaceController extends AbstractController {
                         
         boolean demoExists = true;
         try {
-            demoExists = FSFacade.getWorkspaces(DEMO_MASTER).contains("\"" + workspaceName + "\"");
+            demoExists = Facade.getWorkspaces(DEMO_MASTER).contains("\"" + workspaceName + "\"");
         } 
         catch (Exception e) {
             logger.log(Level.SEVERE, res,e);
