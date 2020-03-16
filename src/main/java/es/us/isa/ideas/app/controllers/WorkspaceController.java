@@ -6,6 +6,7 @@ import es.us.isa.ideas.app.entities.Workspace;
 import es.us.isa.ideas.app.repositories.ResearcherRepository;
 import es.us.isa.ideas.app.repositories.WorkspaceRepository;
 import es.us.isa.ideas.app.security.LoginService;
+import es.us.isa.ideas.app.services.GDriveService;
 import es.us.isa.ideas.app.services.ResearcherService;
 import es.us.isa.ideas.app.services.TagService;
 import es.us.isa.ideas.app.services.WorkspaceService;
@@ -42,6 +43,9 @@ public class WorkspaceController extends AbstractController {
     
     @Autowired
     ResearcherService researcherService;
+    
+    @Autowired
+    GDriveService gdriveService;
     
     private static final Logger logger = Logger.getLogger(WorkspaceController.class.getName());
     
@@ -189,27 +193,21 @@ public class WorkspaceController extends AbstractController {
         try {
             String username = LoginService.getPrincipal().getUsername();
             if (workspaceName.equalsIgnoreCase(SAMPLE_WORKSPACE) && !Facade.getWorkspaces(username).contains(workspaceName) || "[]".equals(Facade.getWorkspaces(username))) {
-             
-            	if(o instanceof IdeasRepo) {
-            	Facade.createWorkspace(SAMPLE_WORKSPACE, username);
-            	}
-            	/*
-            	if(o instanceof Drive) {
-            	Facade.createGDriveWorkspace(SAMPLE_WORKSPACE, username);
-            	}*/
+             //Si no existe el workspace lo carga directamente en local
+            	
                 Facade.saveSelectedWorkspace(SAMPLE_WORKSPACE, username);
             	
-            	/*
-            	if(o instanceof Drive) {
-            	Facade	
-            	}
-            	*/
-                //Si initRepoLab es una instancia de GDRIVE ejecuta estas funciones
             }
+            //Si no existe en local buscar en google drive
+            if(FileController.existeWorkspaceLocal(workspaceName)) {
             wsJson = Facade.getWorkspaceTree(workspaceName, LoginService.getPrincipal().getUsername());
+            }else {
+            wsJson = Facade.getGDriveWorkspaceTree(workspaceName, LoginService.getPrincipal().getUsername(), gdriveService.getCredentials(username));
+            }
             if (LoginService.getPrincipal().getUsername().startsWith("demo")) {
                 workspaceService.updateLaunches(workspaceName, "DemoMaster");
             }
+            //Si no esta ni en google drive ni en local entonces lanzar la excepcion
         } catch (Exception e) {
             logger.log(Level.WARNING, "Workspace {0} does not exist.", workspaceName);
             return wsJson;
