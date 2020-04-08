@@ -67,7 +67,9 @@ var WorkspaceManager = {
                 for (index in workspaces) {
                     if (workspaces[index].name != undefined) {
                         var wsName = workspaces[index].name;
-                        createWSLine(wsName);
+                        var type=workspaces[index].type;
+                        createWSLine(wsName, type);
+                        
                         wss.push(workspaces[index]);
                     }
 
@@ -200,7 +202,7 @@ var WorkspaceManager = {
     createWorkspace: function (workspaceName, description, tags, callback,type) {
         FileApi.createWorkspace(workspaceName, description, tags, function (ts) {
             if (ts) {
-                createWSLine(workspaceName, function () {
+                createWSLine(workspaceName,type, function () {
                     WorkspaceManager.setSelectedWorkspace(workspaceName);
                     WorkspaceManager.loadWorkspace();
                 });
@@ -266,7 +268,7 @@ var WorkspaceManager = {
                 if (WorkspaceManager.getSelectedWorkspace() !== workspaceName) {
                     deleteWSLine(WorkspaceManager.getSelectedWorkspace());
                 }
-                createWSLine(workspaceName, function () {
+                createWSLine(workspaceName, type, function () {
                     WorkspaceManager.setSelectedWorkspace(workspaceName);
                     AppPresenter.loadSection("editor", workspaceName);
                 });
@@ -355,11 +357,18 @@ var WorkspaceManager = {
     }
 };
 
-var createWSLine = function (wsName) {
+var createWSLine = function (wsName, type) {
+	var photo="";
+	if(type==="local"){
+		photo=" <img src=\"../../img/logo-gdrive.png\" width=\"25\">";
+	}else{
+		photo="<img src=\"../../img/Google_Drive_logo_color.png\" width=\"25\">";
+	}
+	
     var wsLi = $("<li><a class=\"indented apl_editor_"
             + wsName
             + "\">"
-            + wsName
+            + wsName + " "+ photo
             + "</a><span class=\"glyphicon glyphicon-chevron-right\"></span></li>");
     $("#workspacesNavContainer").append(wsLi);
     wsLi.click(function () {
