@@ -14,6 +14,7 @@ var csv_icon = "../../../css/dyntree/skin/eCSV.png";
 var r_icon =   "../../../css/dyntree/skin/Rlogo.png";
 var latex_icon =   "../../../css/dyntree/skin/LatexFile.png";
 var binary_file_icon = "../../../css/dyntree/skin/eBinaryFile.png";
+var gdrivecolor_icon="../../img/Google_Drive_logo_color.png";
 
 var extensionsIcons = {
     'gif': 'image_icon',
@@ -84,10 +85,20 @@ var WorkspaceManager = {
     loadWorkspace: function (callback) {
         var workspaceName = WorkspaceManager.getSelectedWorkspace();
         console.log("Loading WS " + workspaceName + " ...");
+       
         FileApi.loadWorkspace(workspaceName, function (ts) {
             var wsLabel = $("#editorSidePanelHeaderWorkspaceInfo");
             wsLabel.empty(WorkspaceManager.getSelectedWorkspace());
             wsLabel.append(WorkspaceManager.getSelectedWorkspace());
+            console.log("222222222222222222"+$("#upload_workspace").val());
+            console.log("222222222222222222"+document.getElementById("download_workspace").value);
+            console.log("333333333333333333"+ts[0].type);
+            if(ts[0].type==="local"){
+            wsLabel.append(" <a href=\"workspaces/upload?workspaceName="+workspaceName+"\"> <img src=\"../../img/logo-gdrive.png\" width=\"25\" title=\""+$("#upload_workspace").val()+"\"> </a>");
+            }else{
+            wsLabel.append(" <a href=\"workspaces/download?workspaceName="+workspaceName+"\"> <img src=\"../../img/Google_Drive_logo_color.png\" width=\"25\" title=\""+$("#download_workspace").val()+"\"  > </a>");
+            }
+            
             if ($("#projectsTree").length > 0) {
                 var treeStruct = ts;
                 $("#projectsTree").dynatree("getRoot").addChild(treeStruct);

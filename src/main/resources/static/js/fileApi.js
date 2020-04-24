@@ -6,6 +6,7 @@ var FileApi = {
 			"success" : function(result) {
                             if(result!==""){
 				var treeStruct = eval("(" + result + ")");
+				console.log(treeStruct);
 				callback(treeStruct);
                             }
 			},

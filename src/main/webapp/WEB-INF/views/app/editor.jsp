@@ -32,6 +32,12 @@
     <div id="editorSidePanel" class="ui-widget-content">
         <div id="editorSidePanelHeader">
             <span id="editorSidePanelHeaderWorkspaceInfo"></span>
+            <c:set var="val"><spring:message code="editor.actions.upload_workspace"></spring:message></c:set>
+            <input id="upload_workspace" type="hidden" value="${val}"/>
+            
+             <c:set var="value"><spring:message code="editor.actions.download_workspace"></spring:message></c:set>
+            <input id="download_workspace" type="hidden" value="${value}"/>
+         <!-- <img src="../../img/Google_Drive_logo_color.png" width="35" style="position:absolute; left:180px;"/> -->  
             <div id="editorSidePanelHeaderAddProject">
                 <div class="btn-group">
                     <div class="btn btn-primary dropdown-toggle" data-toggle="dropdown">+</div>

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import es.us.isa.ideas.repo.AuthenticationManagerDelegate;
 import es.us.isa.ideas.repo.Facade;
 import es.us.isa.ideas.repo.IdeasRepo;
+import es.us.isa.ideas.app.security.GoogleAuthorizationService;
 import es.us.isa.ideas.app.security.LoginService;
 import es.us.isa.ideas.app.security.UserAccount;
 import es.us.isa.ideas.app.services.GDriveService;
@@ -56,6 +57,9 @@ public class FileController extends AbstractController {
 
 	@Autowired
 	GDriveService gdriveService;
+	
+	@Autowired
+	GoogleAuthorizationService googleAuthorizationService;
 
 	private static final String DEMO_MASTER = "DemoMaster";
 	private static final String SAMPLE_WORKSPACE = "SampleWorkspace";
@@ -494,15 +498,23 @@ public class FileController extends AbstractController {
 	public String getWorkspacesString() {
 		initRepoLab();
 		String ws = "";
+		
 		try {
-			//Hay que concatenar las dos cadenas de workspaces
+			Boolean isAuth=googleAuthorizationService.isUserAuthenticated(LoginService.getPrincipal().getUsername());
 			String username=LoginService.getPrincipal().getUsername();
+			//Si el usuario no esta logueado en Google Drive solo muestra los workspaces locales
+			if(!isAuth) {
+			ws=Facade.getWorkspaces(username);	
+			}else {
+			//Hay que concatenar las dos cadenas de workspaces
+			
 			String local = Facade.getWorkspaces(username);
 			Drive credentials = gdriveService.getCredentials(username);
 			String gdrive=Facade.getGDriveWorkspaces(username, credentials);
 			String all=local+gdrive;
 			ws=all.replace("][", ", ");			
 			System.out.println(ws);
+			}
 			
 		} catch (AuthenticationException | IOException e) {
 			logger.log(Level.SEVERE, null, e);
@@ -706,6 +718,7 @@ public class FileController extends AbstractController {
 
 		try {
 			workspaceName = new String(workspaceName.getBytes("iso-8859-15"), "UTF-8");
+			//TODO
 		} catch (Exception ex) {
 			logger.log(Level.INFO, "Unsopported encoding", ex);
 		}
@@ -715,6 +728,7 @@ public class FileController extends AbstractController {
 		boolean res = true;
 		try {
 			Facade.saveSelectedWorkspace(workspaceName, LoginService.getPrincipal().getUsername());
+			
 		} catch (Exception e) {
 			res = false;
 			logger.log(Level.SEVERE, e.getMessage());

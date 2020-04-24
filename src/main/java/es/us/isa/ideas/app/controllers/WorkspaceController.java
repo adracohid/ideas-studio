@@ -15,6 +15,8 @@ import es.us.isa.ideas.repo.IdeasRepo;
 import es.us.isa.ideas.repo.exception.AuthenticationException;
 import es.us.isa.ideas.repo.exception.BadUriException;
 import es.us.isa.ideas.repo.impl.fs.FSWorkspace;
+
+import java.io.IOException;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.servlet.view.RedirectView;
 
 import com.google.api.services.drive.Drive;
 
@@ -212,6 +215,7 @@ public class WorkspaceController extends AbstractController {
             logger.log(Level.WARNING, "Workspace {0} does not exist.", workspaceName);
             return wsJson;
         }
+       
         return wsJson;
     }
 
@@ -317,4 +321,41 @@ public class WorkspaceController extends AbstractController {
         
         return res;
     }
+    
+    @RequestMapping("/upload")
+    public RedirectView uploadWorkspace(@RequestParam("workspaceName") String workspaceName) {
+    	RedirectView res=null;
+    	String username = LoginService.getPrincipal().getUsername();
+    	Drive credentials;
+		try {
+			credentials = gdriveService.getCredentials(username);
+			Facade.uploadWorkspace(workspaceName, username, credentials);
+			res=new RedirectView("../app/editor");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return res;
+    
+    }
+    @RequestMapping("/download")
+    public RedirectView downloadWorkspace(@RequestParam("workspaceName") String workspaceName) {
+    	RedirectView res=null;
+    	String username = LoginService.getPrincipal().getUsername();
+    	Drive credentials;
+		try {
+			res=new RedirectView("../app/editor");
+			credentials = gdriveService.getCredentials(username);
+			Facade.downloadGDriveWorkspace(workspaceName, username, credentials);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			
+			e.printStackTrace();
+		}
+		return res;
+    }
+    	
+    
+    
 }

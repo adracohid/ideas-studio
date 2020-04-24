@@ -690,7 +690,8 @@ var EditorManager = {
             saveCurrentSession(function () {
                 
                 var exists = fileUri in EditorManager.tabsMap;
-
+              
+                
                 FileApi.loadFileContents(fileUri, function (content) {
 
                     if (!exists) {

@@ -43,20 +43,5 @@ public Drive getCredentials(String username) throws IOException {
 	Credential credential=googleAuthorizationService.getCredentials(username);
 	return new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME).build();	
 }
-public void uploadFile(String name,String username) throws IOException, GeneralSecurityException {
-	File fileMetadata = new File();
-	String type = null;
-	Credential credential=googleAuthorizationService.getCredentials(username);
-	driveService=new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME).build();
-	if (name.contains(".txt")) {
-		type = "text/plain";
-	}
-	// TODO
-	// Si type==null, solo se puede poner las extensiones anteriores
-	fileMetadata.setName(name);
-	java.io.File filePath = new java.io.File("src/main/resources/files/" + name);
-	FileContent mediaContent = new FileContent(type, filePath);
-	File file = driveService.files().create(fileMetadata, mediaContent).setFields("id").execute();
-	
-}
+
 }

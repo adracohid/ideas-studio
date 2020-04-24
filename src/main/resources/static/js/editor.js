@@ -109,6 +109,7 @@ var intializeEditorWindow = function (callback) {
             currentSelectedNode = node;
             if (!node.data.isFolder) {
                 var uri = WorkspaceManager.getSelectedWorkspace() + "/" + FileApi.calculateNodeUri(node);
+                console.log("Uri: "+uri);
                 EditorManager.openFile(uri);
             }
             ;
