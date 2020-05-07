@@ -329,7 +329,8 @@ public class WorkspaceController extends AbstractController {
     	Drive credentials;
 		try {
 			credentials = gdriveService.getCredentials(username);
-			Facade.uploadWorkspace(workspaceName, username, credentials);
+			boolean test=false;
+			Facade.uploadWorkspace(workspaceName, username, credentials,test);
 			res=new RedirectView("../app/editor");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

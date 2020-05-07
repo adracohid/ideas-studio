@@ -139,6 +139,16 @@ public class AppController extends AbstractController {
 		ModelAndView result = new ModelAndView("app/modalWindows/" + window);
 		for (String key : allRequestParams.keySet())
 			result.addObject(key, allRequestParams.get(key));
+		
+		Boolean isAuth;
+		try {
+			isAuth = googleAuthorizationService.isUserAuthenticated(LoginService.getPrincipal().getUsername());
+			result.addObject("isgdriveconnected",isAuth);
+		} catch (IOException e) {
+			result.addObject("error","¡Ha ocurrido un error!");
+			e.printStackTrace();
+		}
+		
 		return result;
 	}
 

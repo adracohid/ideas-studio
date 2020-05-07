@@ -2,6 +2,7 @@
 	pageEncoding="UTF-8"%>
 <%@taglib prefix="ideas" tagdir="/WEB-INF/tags/"%>
 <%@taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
 <ideas:app-modal-dialog>
 	<div class="modal-header">
@@ -45,9 +46,14 @@
 		<div class="input-group" id="typeInput">
 			<span class="input-group-addon">Tipo de almacenamiento</span>
 			<div class="form-control">
+	
+			<c:if test="${isgdriveconnected}" >
+			
 				<label class="radio-inline"><input type="radio"
 					id="Google_Drive" name="storage" value="Google_Drive">
-					Google Drive </label> <label class="radio-inline"><input
+					Google Drive </label>
+				</c:if>
+					 <label class="radio-inline"><input
 					type="radio" name="storage" id="local" value="local" checked> Local
 				</label>
 			</div>

@@ -12,6 +12,7 @@ function getNodeByFileUri(fileUri) {
     var res = undefined;
     $("#projectsTree").dynatree("getRoot").visit(function (node) {
         var nodeName = node.data.keyPath === "undefined" ? node.data.title : node.data.keyPath;
+ 
         if (WorkspaceManager.getSelectedWorkspace() + "/" + nodeName === fileUri) {
             res = node;
             return;

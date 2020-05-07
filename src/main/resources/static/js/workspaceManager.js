@@ -66,7 +66,7 @@ var WorkspaceManager = {
                 workspaces = eval('(' + ts + ')');
 
                 for (index in workspaces) {
-                    if (workspaces[index].name != undefined) {
+                    if (workspaces[index].name != undefined && workspaces[index].name != "StoredCredential") {
                         var wsName = workspaces[index].name;
                         var type=workspaces[index].type;
                         createWSLine(wsName, type);
@@ -90,14 +90,16 @@ var WorkspaceManager = {
             var wsLabel = $("#editorSidePanelHeaderWorkspaceInfo");
             wsLabel.empty(WorkspaceManager.getSelectedWorkspace());
             wsLabel.append(WorkspaceManager.getSelectedWorkspace());
-            console.log("222222222222222222"+$("#upload_workspace").val());
-            console.log("222222222222222222"+document.getElementById("download_workspace").value);
-            console.log("333333333333333333"+ts[0].type);
+
+            
+            if(ts[0].type!=null && JSON.parse($("#isconnected").val())){
             if(ts[0].type==="local"){
             wsLabel.append(" <a href=\"workspaces/upload?workspaceName="+workspaceName+"\"> <img src=\"../../img/logo-gdrive.png\" width=\"25\" title=\""+$("#upload_workspace").val()+"\"> </a>");
             }else{
             wsLabel.append(" <a href=\"workspaces/download?workspaceName="+workspaceName+"\"> <img src=\"../../img/Google_Drive_logo_color.png\" width=\"25\" title=\""+$("#download_workspace").val()+"\"  > </a>");
             }
+            }
+            
             
             if ($("#projectsTree").length > 0) {
                 var treeStruct = ts;
@@ -370,10 +372,9 @@ var WorkspaceManager = {
 
 var createWSLine = function (wsName, type) {
 	var photo="";
-	if(type==="local"){
-		photo=" <img src=\"../../img/logo-gdrive.png\" width=\"25\">";
-	}else{
+	if(type==="Google_Drive"){
 		photo="<img src=\"../../img/Google_Drive_logo_color.png\" width=\"25\">";
+		
 	}
 	
     var wsLi = $("<li><a class=\"indented apl_editor_"
