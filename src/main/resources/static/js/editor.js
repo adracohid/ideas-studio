@@ -192,7 +192,7 @@ function share(dst, mailContent) {
 }
 
 //      Normalization:
-var special = "%&@#¬/()=?¿¡!|ºª";
+var special = "%&@#¬/()=?¿¡!|ºª.";
 function checkerName(e) {
     var disable = true;
     var key = e.keyCode || e.which;
