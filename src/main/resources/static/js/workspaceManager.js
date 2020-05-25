@@ -213,6 +213,8 @@ var WorkspaceManager = {
         });
     },
     createWorkspace: function (workspaceName, description, tags, callback,type) {
+    	var btn=$(".continue");
+    	btn.addClass('disabled');
         FileApi.createWorkspace(workspaceName, description, tags, function (ts) {
             if (ts) {
                 createWSLine(workspaceName,type, function () {
@@ -233,6 +235,7 @@ var WorkspaceManager = {
                 });
             }
             hideModal();
+            btn.removeClass('disabled');
 
         },type);
     },

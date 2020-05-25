@@ -16,6 +16,9 @@ var newDirItem = {
     },
     onCreate: function () {
         var folderName = $("#modalCreationField input").val(), nodeUri;
+        // The button create is disabled when the app is loading a new directory
+        var btn =$(".continue");
+        btn.addClass('disabled');
         
         // Create a folder only inside a folder node
         if (!currentSelectedNode.data.isFolder) currentSelectedNode = currentSelectedNode.getParent();
@@ -41,11 +44,13 @@ var newDirItem = {
             FileApi.createDirectory(folderUri, function (ts) {
                 if (ts == true || ts == "true") {
                     console.log("Directory created: " + ts);
+                    
                     var keyPath = nodeUri + "/" + folderName;
                     var newChild = buildChild(folderName, true, "folder_icon", keyPath);
                     hideModal();
                     currentSelectedNode.addChild(newChild);
                     currentSelectedNode.sortChildren();
+                    btn.removeClass('disabled');
                     //currentSelectedNode.data.keyPath =  nodeUri + "/" + fileName + languageExtension;
                 } else {
                     if (!$("#modalCreationField input").val()) {
@@ -82,7 +87,10 @@ var newProjectItem = {
     },
     onCreate: function () {
         var projectName = $("#modalCreationField input").val();
+        var btn=$(".continue");
+        btn.addClass('disabled');
         var projectTemplateName = $("#template-from-module").val();
+       
         var projectUri = WorkspaceManager.getSelectedWorkspace() + "/" + projectName;
         FileApi.createProject(projectUri, function (ts) {
             if (ts == true || ts == "true") {
@@ -97,7 +105,9 @@ var newProjectItem = {
                     var parentNode = $("#projectsTree").dynatree("getRoot");
                     parentNode.addChild(newChild);
                 }
+                
                 hideModal();
+                btn.removeClass('disabled');
              } else {
                 if (!$("#modalCreationField input").val()) {
                     hideModal();
@@ -255,6 +265,8 @@ var createNewFile = function (languageId, languageExtension,callback) {
     var fileName = $("#modalCreationField input").val(),
         fileExt = $("#modalCreationField .extension").text().split(".")[1];
     console.log("result-->" + nameFileChecker(fileName, fileExt));
+    var btn=$(".continue");
+    btn.addClass('disabled');
     if (nameFileChecker(fileName, fileExt)) {
 
         var templateName = $("#template-file").val();
@@ -285,6 +297,7 @@ var createNewFile = function (languageId, languageExtension,callback) {
                 }
 
                 hideModal();
+                btn.removeClass('disabled');
                 node.addChild(newChild);
                 node.sortChildren();
             }

@@ -579,13 +579,27 @@ public class FileController extends AbstractController {
 		}
 
 		String username = LoginService.getPrincipal().getUsername();
+		//Comprobar aqui el nombre del workspace de entre todos los nombres
+		//del workspace
+		FSWorkspace wLocal= new FSWorkspace(workspaceName, username);
+		
 		try {
+			Drive credentials = gdriveService.getCredentials(username);
+			File ws = new File(IdeasRepo.get().getObjectFullUri(wLocal));
+			GDriveWorkspace wGDrive=new GDriveWorkspace(workspaceName, username, credentials);
+			//Si el nombre del workspace existe tanto en local como en Google Drive no se hace nada
+			if(ws.exists() || wGDrive.exist()) {
+				logger.log(Level.INFO, "Workspace "+workspaceName+" already exist");
+				success = false;			
+				
+			}else {
 			if (type.equals("local")) {
 				res = Facade.createWorkspace(workspaceName, username);
 			}
 			if (type.equals("Google_Drive")) {
-				Drive credentials = gdriveService.getCredentials(username);
+				
 				res = Facade.createGDriveWorkspace(workspaceName, username, credentials);
+			}
 			}
 
 		} catch (Exception e) {
