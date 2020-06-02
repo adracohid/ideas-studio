@@ -5,6 +5,8 @@
  */
 package es.us.isa.ideas.app.configuration;
 
+import java.util.Arrays;
+
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.google.common.collect.ImmutableList;
 
 import es.us.isa.ideas.app.security.LoginService;
 /**
@@ -248,6 +255,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .and()
                 .logout()
                     .logoutSuccessUrl("/welcome");
+//                    .and()
+//                    .cors();
                                    
                 
         
@@ -279,6 +288,24 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
  
         http.csrf().disable();
         http.headers().frameOptions().disable();
+       http.cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues());
        
     }
+    
+   @Bean
+   public CorsConfigurationSource corsConfigurationSource() {
+    	final CorsConfiguration configuration=new CorsConfiguration();
+    	configuration.setAllowedOrigins(ImmutableList.of("*"));
+    	configuration.setAllowedMethods(ImmutableList.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    	configuration.setAllowCredentials(true);
+    	configuration.setAllowedHeaders(ImmutableList.of("Authorization", "Cache-Control", "Content-Type"));
+    	final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    	source.registerCorsConfiguration("/**",configuration);
+    	return source;
+    }
+    
+   
+
+    
+    
 }

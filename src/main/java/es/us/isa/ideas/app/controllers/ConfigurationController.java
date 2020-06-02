@@ -1,11 +1,13 @@
 package es.us.isa.ideas.app.controllers;
 
 import com.google.common.base.Strings;
+
 import com.google.gson.Gson;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -20,6 +22,7 @@ import java.util.logging.Logger;
 import javax.servlet.ServletContext;
 import org.apache.commons.io.FileUtils;
 
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
 @RequestMapping("/module")
 public class ConfigurationController extends AbstractController {
@@ -36,8 +39,10 @@ public class ConfigurationController extends AbstractController {
 
     @Autowired
     ServletContext servletContext;
-
+    
+    
     // TODO: use spring cache
+    @CrossOrigin(origins = "http://localhost:8080")
     @RequestMapping(value = "/configuration", method = RequestMethod.GET)
     @ResponseBody
     public StudioConfiguration getConfiguration(HttpServletRequest request) {

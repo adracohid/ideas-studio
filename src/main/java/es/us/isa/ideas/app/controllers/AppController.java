@@ -1,10 +1,12 @@
 package es.us.isa.ideas.app.controllers;
 
 import java.io.IOException;
+
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,6 +16,7 @@ import es.us.isa.ideas.app.mail.CustomMailer;
 import es.us.isa.ideas.app.security.GoogleAuthorizationService;
 import es.us.isa.ideas.app.security.LoginService;
 
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
 @RequestMapping("/app")
 public class AppController extends AbstractController {
@@ -27,7 +30,8 @@ public class AppController extends AbstractController {
 	public AppController() {
 		super();
 	}
-
+	
+	
 	@RequestMapping("/editor")
 	public ModelAndView editor() {
 		ModelAndView result;

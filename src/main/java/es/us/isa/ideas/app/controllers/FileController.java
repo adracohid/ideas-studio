@@ -3,6 +3,7 @@ package es.us.isa.ideas.app.controllers;
 import es.us.isa.ideas.app.entities.Workspace;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,6 +22,7 @@ import es.us.isa.ideas.repo.exception.BadUriException;
 import es.us.isa.ideas.repo.exception.ObjectClassNotValidException;
 import es.us.isa.ideas.repo.gdrive.DriveQuickstart;
 import es.us.isa.ideas.repo.gdrive.GDriveWorkspace;
+import es.us.isa.ideas.repo.impl.fs.FSFile;
 import es.us.isa.ideas.repo.impl.fs.FSWorkspace;
 import es.us.isa.ideas.app.util.AppResponse;
 import java.io.File;
@@ -48,6 +50,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.google.api.services.drive.Drive;
 
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
 @Controller
 @RequestMapping("/files")
 public class FileController extends AbstractController {
@@ -595,10 +598,13 @@ public class FileController extends AbstractController {
 			}else {
 			if (type.equals("local")) {
 				res = Facade.createWorkspace(workspaceName, username);
+
 			}
 			if (type.equals("Google_Drive")) {
 				
 				res = Facade.createGDriveWorkspace(workspaceName, username, credentials);
+				String id=DriveQuickstart.getWorkspaceByName(workspaceName, username, credentials).getId();
+				DriveQuickstart.updateGdriveWorkspace(id, workspaceName, description, credentials);
 			}
 			}
 
@@ -618,6 +624,9 @@ public class FileController extends AbstractController {
 	public boolean updateWorkspace(@RequestParam("workspaceName") String workspaceName,
 			@RequestParam("newName") String newName, @RequestParam("newDescription") String newDescription) {
 		initRepoLab();
+		String username = LoginService.getPrincipal().getUsername();
+
+		
 		boolean success = true;
 
 		try {
@@ -628,36 +637,55 @@ public class FileController extends AbstractController {
 			logger.log(Level.INFO, "Unsopported encoding", ex);
 		}
 
-		String username = LoginService.getPrincipal().getUsername();
-
+		
+	
 		String workspace = getSelectedWorkspace();
-
-		FSWorkspace oldWS = new FSWorkspace(workspaceName, username);
-		FSWorkspace newWS = new FSWorkspace(newName, username);
+		
+	
 
 		boolean nameExists = true;
 
 		if (!(workspace.equals(newName))) {
-			try {
-				nameExists = Facade.getWorkspaces(username).contains("\"" + nameExists + "\"");
+			
+		try {
+			System.out.println("\"" + newName + "\"");
+			//Busca entre todos los workspaces tanto local como en GDrive
+			nameExists =	getWorkspacesString().contains("\"" + newName + "\"");
+			//	nameExists = Facade.getWorkspaces(username).contains("\"" + newName + "\"");
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, null, e);
 				nameExists = false;
 			}
 			if (!nameExists) {
 				try {
-					IdeasRepo.get().getRepo().move(oldWS, newWS, true);
+					if(existeWorkspaceLocal(workspaceName)) {
+						FSWorkspace oldWS = new FSWorkspace(workspaceName, username);
+						FSWorkspace newWS = new FSWorkspace(newName, username);
+						IdeasRepo.get().getRepo().move(oldWS, newWS, true);
 					IdeasRepo.get().getRepo().delete(oldWS);
-
-				} catch (AuthenticationException ex) {
+					}
+				} catch (AuthenticationException  ex) {
 					success = false;
 					Logger.getLogger(FileController.class.getName()).log(Level.SEVERE, null, ex);
 				}
 				if (success) {
+					if(existeWorkspaceLocal(workspaceName)) {
 					Workspace ws = workspaceService.findByNameAndOwner(workspaceName, username);
 					ws.setDescription(newDescription);
 					ws.setName(newName);
 					workspaceService.save(ws);
+					}else {
+					Drive credentials;
+					try {
+						credentials = gdriveService.getCredentials(username);
+						String id	=DriveQuickstart.getWorkspaceByName(workspaceName, username, credentials).getId();
+						DriveQuickstart.updateGdriveWorkspace(id, newName, newDescription, credentials);
+					} catch (IOException | GeneralSecurityException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					}
 					try {
 						Facade.saveSelectedWorkspace(newName, username);
 					} catch (IOException ex) {
@@ -669,6 +697,7 @@ public class FileController extends AbstractController {
 				logger.log(Level.SEVERE, "Workspace with name {0} already exists!", newName);
 			}
 		}
+		
 		return success;
 	}
 
